@@ -1,4 +1,4 @@
-package com.example.premierapp
+package com.example.premierapp.ApiService
 
 import retrofit2.http.GET
 import retrofit2.http.Path
@@ -21,4 +21,11 @@ interface ApiService {
 interface TheSportsDbApiService {
     @GET("api/v1/json/3/searchplayers.php")
     suspend fun getPlayerDetails(@Query("p") fname: String): PlayerResponseModel
+
+    @GET("api/v1/json/3/eventsround.php")
+    suspend fun getGamesForWeek(
+        @Query("id") id: Int = 4328,   // Set default ID
+        @Query("r") week: Int,         // Use @Query to pass the week
+        @Query("s") season: String = "2024-2025" // Use @Query to pass the season
+    ): GameWeekResponseModel
 }

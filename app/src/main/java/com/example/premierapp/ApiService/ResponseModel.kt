@@ -1,6 +1,4 @@
-package com.example.premierapp
-
-import java.util.Objects
+package com.example.premierapp.ApiService
 
 data class Team(
     val id: Int,
@@ -171,4 +169,43 @@ data class TopTeam(
     val venue: String,
     val lastUpdated: String
 )
+
+data class GameWeekResponseModel(
+    val events: List<Events>,
+)
+
+data class Events(
+    val strEvent: String,             // Event name
+    val strLeague: String,            // League name
+    val strLeagueBadge: String,       // URL of the league badge
+    val strHomeTeam: String,          // Home team name
+    val strAwayTeam: String,          // Away team name
+    val intHomeScore: String?,        // Home team score (nullable)
+    val intAwayScore: String?,        // Away team score (nullable)
+    val intRound: String?,            // Round number (nullable)
+    val intSpectators: String?,       // Number of spectators (nullable)
+    val strOfficial: String?,         // Official(s) (nullable)
+    val strTimestamp: String,         // Event timestamp (UTC time)
+    val dateEvent: String,            // Event date
+    val dateEventLocal: String,       // Local event date
+    val strTime: String,              // Event time (UTC)
+    val strTimeLocal: String,         // Local event time
+    val strHomeTeamBadge: String,     // URL of the home team's badge
+    val idAwayTeam: String,           // ID of the away team
+    val strAwayTeamBadge: String,     // URL of the away team's badge
+    val strVenue: String?,            // Venue name (nullable)
+    val strCountry: String?,          // Country name (nullable)
+    val strCity: String?,             // City name (nullable)
+    val strPoster: String?,           // URL of the event poster
+    val strSquare: String?,           // URL of the square image of the event
+    val strFanart: String?,           // URL of the fanart image (nullable)
+    val strThumb: String?,            // URL of the thumbnail image
+    val strBanner: String?,           // URL of the banner image
+    val strMap: String?,              // Map URL (nullable)
+    val strVideo: String?,            // URL of the video highlights
+    val strStatus: String?,           // Event status (nullable)
+    val strPostponed: String?,        // If the match is postponed (nullable)
+    val strLocked: String?            // If the event data is locked (nullable)
+)
+
 

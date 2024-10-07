@@ -1,47 +1,57 @@
 package com.example.premierapp
 
+import android.content.Context
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.compose.ui.Alignment
 import com.example.premierapp.ui.theme.PremierAppTheme
 import android.util.Log
-import androidx.appcompat.app.AppCompatActivity
+import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.*
-import com.example.premierapp.RetrofitClient
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material3.CenterAlignedTopAppBar
 import kotlinx.coroutines.*
 import androidx.compose.runtime.*
-import coil.compose.rememberImagePainter
-import androidx.compose.foundation.Image
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
-import androidx.compose.foundation.clickable
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.ui.graphics.Color
-import androidx.compose.foundation.border
-import androidx.compose.foundation.shape.CutCornerShape
-import androidx.compose.ui.unit.dp
+import coil.compose.AsyncImage
+import com.example.premierapp.ApiService.ResponseModel
+import com.example.premierapp.ApiService.RetrofitClient
+import com.example.premierapp.screens.AllGames
+import com.example.premierapp.screens.EveryGame
+import com.example.premierapp.screens.GamePage
+import com.example.premierapp.screens.PlayerDetailsScreen
+import com.example.premierapp.screens.TeamDetailsScreen
+import com.example.premierapp.screens.TopTen
+import com.example.premierapp.screens.Tulos
+import retrofit2.HttpException
+
 
 class MainActivity : ComponentActivity() {
     private val apiRateLimiter = ApiRateLimiter(10)
@@ -56,511 +66,168 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    PremierApp(fetchData = { onResult -> fetchData(onResult) })
+                    PremierApp(fetchData = { onResult -> fetchData(this, onResult) })
                 }
             }
         }
     }
-    fun fetchData(onResult: (List<ResponseModel>) -> Unit) {
+    private fun fetchData(context: Context, onResult: (List<ResponseModel>) -> Unit) {
         debounceJob?.cancel() // Cancel previous job
         debounceJob = CoroutineScope(Dispatchers.IO).launch {
             if (apiRateLimiter.canMakeCall()) {
                 try {
                     val response = RetrofitClient.footballApiService.getData()
                     apiRateLimiter.recordCall() // Record the call
+
                     withContext(Dispatchers.Main) {
                         onResult(response.standings[0].table)
                     }
+
                 } catch (e: Exception) {
-                    Log.e("Error", "Error fetching data: $e")
                     withContext(Dispatchers.Main) {
-                        onResult(emptyList())
+                        when (e) {
+                            is HttpException -> {
+                                if (e.code() == 429) {
+                                    // Liikaa pyyntöjä, näytetään varoitus
+                                    Log.w("Warning", "Rate limit exceeded. Please wait.")
+                                    // Näytetään varoitusviesti käyttäjälle
+                                    Toast.makeText(
+                                        context,
+                                        "Liian monta API-kutsua peräkkäin, odota hetki.",
+                                        Toast.LENGTH_LONG
+                                    ).show()
+                                } else {
+                                    // Muu HTTP-virhe
+                                    Log.e("Error", "HTTP error: ${e.code()}")
+                                    Toast.makeText(
+                                        context,
+                                        "HTTP-virhe: ${e.code()}",
+                                        Toast.LENGTH_LONG
+                                    ).show()
+                                }
+                            }
+                        }
+                        onResult(emptyList()) // Palautetaan tyhjä lista virheen sattuessa
                     }
                 }
             } else {
-                Log.w("Warning", "Rate limit exceeded. Please wait.")
+                withContext(Dispatchers.Main) {
+                    Log.w("Warning", "Rate limit exceeded. Please wait.")
+                    Toast.makeText(context, "Liikaa pyyntöjä, odota hetki.", Toast.LENGTH_LONG).show()
+                }
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun PremierApp(fetchData: (onResult: (List<ResponseModel>) -> Unit) -> Unit) {
+    val navController = rememberNavController()
+    val items = listOf(
+        TabItem("Sarjataulukko", Icons.Filled.Home, "team_list"),
+        TabItem("Top 10", Icons.Filled.Person, "top_ten"),
+        TabItem("Kaikki pelit", Icons.Filled.Search,"all_games")
+    )
+    val lightPurple = Color(0xFF04f5ff)
+
+    Scaffold(
+        topBar = {
+            CenterAlignedTopAppBar(
+                modifier = Modifier.height(100.dp),
+                title = {
+                    AsyncImage(
+                        model = "https://fifplay.com/img/public/premier-league-3-logo.png",
+                        contentDescription = "Premier League Logo",
+                        modifier = Modifier.size(180.dp),// Set size for the logo
+                    )
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = lightPurple// Teal background for secondary screens
+                )
+            )
+        },
+        bottomBar = {
+            // Add your BottomBar here if needed
+            BottomNavigation(items, navController)
+
+        }
+    ) { paddingValues ->  // Use paddingValues to apply padding to the NavHost
+        NavHost(navController = navController, startDestination = "team_list", Modifier.padding(paddingValues)) {
+            composable("team_list") {
+                TeamListScreen(navController, fetchData)
+            }
+            composable("top_ten") {
+                TopTen(navController)
+            }
+            composable("all_games") {
+                GamePage(navController)
+            }
+            composable("team_details/{teamId}") { backStackEntry ->
+                val teamId = backStackEntry.arguments?.getString("teamId") ?: return@composable
+                TeamDetailsScreen(navController, teamId = teamId)
+            }
+            composable("player_details/{fname}") { backStackEntry ->
+                val fname = backStackEntry.arguments?.getString("fname") ?: return@composable
+                PlayerDetailsScreen(navController, fname = fname)
+            }
+            composable("team_games/{teamName}") { backStackEntry ->
+                val teamName = backStackEntry.arguments?.getString("teamName") ?: return@composable
+                EveryGame(teamName = teamName)
             }
         }
     }
 }
 
 @Composable
-fun PremierApp(fetchData: (onResult: (List<ResponseModel>) -> Unit) -> Unit) {
-    val navController = rememberNavController()
-    NavHost(navController = navController, startDestination = "team_list") {
-        composable("team_list") {
-            TeamListScreen(navController, fetchData)
-        }
-        composable("team_details/{teamId}") { backStackEntry ->
-            val teamId = backStackEntry.arguments?.getString("teamId") ?: return@composable
-            TeamDetailsScreen(navController, teamId = teamId)
-        }
-        composable("player_details/{fname}") { backStackEntry ->
-            val fname = backStackEntry.arguments?.getString("fname") ?: return@composable
-            PlayerDetailsScreen(navController, fname=fname)
+fun BottomNavigation(items: List<TabItem>, navController: NavController) {
+    var selectedItem by remember { mutableIntStateOf(0) }
+    val lightPurple = Color(0xFF04f5ff) // Define your light purple color here
+
+    NavigationBar(
+        containerColor = lightPurple,
+        modifier = Modifier.height(100.dp)// Set the background color for the NavigationBar
+    ) {
+        items.forEachIndexed { index, item ->
+            NavigationBarItem(
+                selected = selectedItem == index,
+                onClick = {
+                    selectedItem = index
+                    navController.navigate(item.route)
+                },
+                icon = { Icon(item.icon, contentDescription = null) },
+                label = { Text(item.label) }
+            )
         }
     }
 }
+
 
 @Composable
 fun TeamListScreen(navController: NavController, fetchData: (onResult: (List<ResponseModel>) -> Unit) -> Unit) {
     var dataList by remember { mutableStateOf<List<ResponseModel>>(emptyList()) }
-    var taulukko by remember { mutableStateOf(true)}
+    var loading by remember { mutableStateOf(true) } // To track loading state
+
+    // Using LaunchedEffect to fetch data when this composable enters the composition
+    LaunchedEffect(Unit) {
+        fetchData { responseList ->
+            dataList = responseList
+            loading = false // Update loading state once data is fetched
+        }
+    }
+
     Column(
         modifier = Modifier.padding(8.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        Otsikko("PremierApp")
-        androidx.compose.material3.Button(
-            onClick = {
-                taulukko = !taulukko
-            },
-            modifier = Modifier
-                .padding(top = 16.dp)
-                .fillMaxWidth()
-        ) {
-            if (taulukko) {
-                Text("Top10")
-            } else {
-                Text("Sarjataulukko")
-            }
-
-        }
-        fetchData { responseList ->
-            dataList = responseList
-        }
-        if (taulukko){
-            Tulos(dataList, navController)
+        if (loading) {
+            LoadingScreen() // Show loading indicator while data is being fetched
         } else {
-            topTen()
-        }
-
-    }
-}
-
-@Composable
-fun Otsikko(title: String) {
-    Text(
-        text = title,
-        fontSize = 24.sp,
-        textAlign = TextAlign.Center,
-        color = MaterialTheme.colorScheme.primary,
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(top = 16.dp, bottom = 16.dp)
-    )
-}
-
-@Composable
-fun topTen(){
-    Column(
-        modifier = Modifier
-            .padding(32.dp)
-    ){
-        Text(
-            text = "Tähän tulee top10",
-            fontSize = 20.sp,
-        )
-    }
-}
-
-@Composable
-fun Tulos(dataList: List<ResponseModel>, navController: NavController) {
-    Column(modifier = Modifier.padding(4.dp)) {
-        dataList.forEach { data ->
-            Row(
-                modifier = Modifier
-                    .padding(vertical = 3.dp, horizontal = 0.dp) // Set vertical space to 3.dp
-                    .fillMaxWidth()
-            ) {
-                Text(
-                    text = "${data.position}.",
-                    fontSize = 20.sp,
-                    modifier = Modifier
-                        .padding(
-                            start = 2.dp,
-                            top = 3.dp,
-                            end = 2.dp,
-                            bottom = 3.dp
-                        ) // Horizontal padding set to 2.dp and vertical to 3.dp
-                        .weight(1f)
-                )
-                Image(
-                    painter = rememberImagePainter(data.team.crest),
-                    contentDescription = "${data.team.name} Crest",
-                    modifier = Modifier
-                        .size(30.dp)
-                        .padding(horizontal = 2.dp)
-                        .align(Alignment.CenterVertically)
-                        .clickable {
-                            navController.navigate("team_details/${data.team.id}")
-                        } // Navigate on click
-                )
-                Text(
-                    text = data.team.tla,
-                    fontSize = 20.sp,
-                    modifier = Modifier
-                        .padding(3.dp)
-                        .weight(1.8f)
-                        .clickable {
-                            navController.navigate("team_details/${data.team.id}")
-                        } // Navigate on click
-                )
-                Text(
-                    text = "${data.playedGames}",
-                    fontSize = 20.sp,
-                    modifier = Modifier
-                        .padding(
-                            vertical = 3.dp,
-                            horizontal = 2.dp
-                        ) // Horizontal padding set to 2.dp and vertical to 3.dp
-                        .weight(0.8f),
-                    textAlign = TextAlign.End // Right align the text
-                )
-                Text(
-                    text = "${data.won}",
-                    fontSize = 20.sp,
-                    modifier = Modifier
-                        .padding(
-                            vertical = 3.dp,
-                            horizontal = 2.dp
-                        ) // Horizontal padding set to 2.dp and vertical to 3.dp
-                        .weight(0.8f),
-                    textAlign = TextAlign.End // Right align the text
-                )
-                Text(
-                    text = "${data.draw}",
-                    fontSize = 20.sp,
-                    modifier = Modifier
-                        .padding(
-                            vertical = 3.dp,
-                            horizontal = 2.dp
-                        ) // Horizontal padding set to 2.dp and vertical to 3.dp
-                        .weight(0.8f),
-                    textAlign = TextAlign.End // Right align the text
-                )
-                Text(
-                    text = "${data.lost}",
-                    fontSize = 20.sp,
-                    modifier = Modifier
-                        .padding(
-                            start = 2.dp,
-                            top = 3.dp,
-                            end = 8.dp,
-                            bottom = 3.dp
-                        ) // Horizontal padding set to 2.dp and vertical to 3.dp
-                        .weight(0.8f),
-                    textAlign = TextAlign.End // Right align the text
-                )
-                Row(
-                    modifier = Modifier
-                        .weight(2f)
-                        .fillMaxWidth()
-                ) {
-                    Text(
-                        text = "${data.goalsFor}  - ${if (data.goalsAgainst < 10) "  " else ""}${data.goalsAgainst}",
-                        fontSize = 20.sp,
-                        modifier = Modifier
-                            .padding(
-                                vertical = 3.dp,
-                                horizontal = 2.dp
-                            ) // Horizontal padding set to 2.dp and vertical to 3.dp
-                            .weight(1f),
-                        textAlign = TextAlign.End // Right align the text
-                    )
-                }
-                Text(
-                    text = "${data.points}",
-                    fontSize = 20.sp,
-                    modifier = Modifier
-                        .padding(
-                            vertical = 3.dp,
-                            horizontal = 2.dp
-                        ) // Horizontal padding set to 2.dp and vertical to 3.dp
-                        .weight(1f),
-                    textAlign = TextAlign.End // Right align the text
-                )
-            }
-        }
-    }
-}
-@Composable
-fun TeamDetailsScreen(navController: NavController, teamId: String) {
-    var teamDetails by remember { mutableStateOf<TeamDetailsModel?>(null) }
-    var isLoading by remember { mutableStateOf(true) } // State to track loading status
-
-    // Fetch team details based on the teamId
-    LaunchedEffect(teamId) {
-        // Simulate a delay for loading state
-        delay(2000)
-
-        withContext(Dispatchers.IO) {
-            try {
-                val response = RetrofitClient.footballApiService.getTeamDetails(teamId)
-                withContext(Dispatchers.Main) {
-                    teamDetails = response
-                    isLoading = false // Set loading to false after fetching
-                }
-            } catch (e: Exception) {
-                Log.e("Error", "Error fetching team details: $e")
-                isLoading = false // Set loading to false in case of error
-            }
-        }
-    }
-
-    // Show loading state until data is fetched
-    if (isLoading) {
-        LoadingScreen()
-    } else {
-        // Main column for displaying team details
-        Column(modifier = Modifier.padding(16.dp)) {
-            // Display team name and crest outside of LazyColumn
-            Text(
-                text = "${teamDetails?.name}",
-                fontSize = 32.sp,
-                textAlign = TextAlign.Center,
-                modifier = Modifier
-                    .padding(vertical = 32.dp)
-                    .fillMaxWidth()
-            )
-            Image(
-                painter = rememberImagePainter(teamDetails?.crest),
-                contentDescription = "${teamDetails?.name} Crest",
-                modifier = Modifier
-                    .size(160.dp)
-                    .padding(vertical = 16.dp)
-                    .align(Alignment.CenterHorizontally)
-            )
-
-            Box(
-                modifier = Modifier.fillMaxSize(), // Make Box take the whole screen
-                contentAlignment = Alignment.Center // Center the content inside the Box
-            ) {
-                LazyColumn(
-                    horizontalAlignment = Alignment.CenterHorizontally, // Center items horizontally inside LazyColumn
-                ){
-                    item {
-                        Text(
-                            text = "Perustettu ${teamDetails?.founded}",
-                            fontSize = 20.sp,
-                            modifier = Modifier.padding(vertical = 4.dp)
-                        )
-                        Text(
-                            text = "Stadion: ${teamDetails?.venue}",
-                            fontSize = 20.sp,
-                            modifier = Modifier.padding(vertical = 4.dp)
-                        )
-                        Spacer(modifier = Modifier.height(16.dp))
-                    }
-
-                    // Coach details
-                    teamDetails?.coach?.let { coach ->
-                        item {
-                            CoachDetails(coach = coach) // Insert CoachDetails here
-                            Spacer(modifier = Modifier.height(16.dp))
-                        }
-                    }
-
-                    // Header for players
-                    item {
-                        Text(
-                            text = "Pelaajat:",
-                            fontSize = 24.sp,
-                            fontWeight = FontWeight.Bold,
-                            modifier = Modifier.padding(vertical = 16.dp)
-                        )
-                    }
-
-                    // Player list
-                    teamDetails?.squad?.let { players ->
-                        items(players) { player ->
-                            PlayerCard(player = player, navController)
-                        }
-                    }
-
-                    // Button to go back to the previous screen
-                    item {
-                        androidx.compose.material3.Button(
-                            onClick = {
-                                navController.popBackStack() // Navigate back to the previous screen
-                            },
-                            modifier = Modifier.padding(top = 16.dp)
-                        ) {
-                            Text("Sarjataulukkoon")
-                        }
-                    }
-                }
-            }
+            Tulos(dataList, navController) // Show data when available
         }
     }
 }
 
-@Composable
-fun PlayerDetailsScreen(navController: NavController, fname: String){
-    var playerDetails by remember { mutableStateOf<PlayerResponseModel?>(null) }
-    var isLoading by remember { mutableStateOf(true) } // State to track loading status
-
-    // Fetch team details based on the teamId
-    LaunchedEffect(fname) {
-        // Simulate a delay for loading state
-        delay(2000)
-
-        withContext(Dispatchers.IO) {
-            try {
-                val response = RetrofitClient.theSportsDbApiService.getPlayerDetails(fname)
-                withContext(Dispatchers.Main) {
-                    playerDetails = response
-                    isLoading = false // Set loading to false after fetching
-                }
-            } catch (e: Exception) {
-                Log.e("Error", "Error fetching team details: $e")
-                isLoading = false // Set loading to false in case of error
-            }
-        }
-    }
-
-    if (isLoading) {
-        LoadingScreen()
-    } else {
-        // Main column for displaying team details
-        Column(modifier = Modifier.padding(16.dp)) {
-            // Display player name and details
-            playerDetails?.player?.firstOrNull()?.let { player ->
-                Text(
-                    text = player.strPlayer,
-                    fontSize = 32.sp,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier
-                        .padding(vertical = 32.dp)
-                        .fillMaxWidth()
-                )
-                // Add more player details display here as needed
-                Text(text = "Pelipaikka: ${player.strPosition}")
-                Text(text = "Kansalaisuus: ${player.strNationality}")
-                Text(text = "Syntymäaika: ${player.dateBorn}")
-                Text(text = "Pelinumero: ${player.strNumber}")
-                Text(text = "Palkka: ${player.strWage}")
-                Text(text = "Pituus: ${player.strHeight}")
-                Text(text = "Paino: ${player.strWeight}")
-                // Add more player fields as needed
-                Box(
-                    modifier = Modifier.fillMaxSize(), // Make Box take the whole screen
-                    contentAlignment = Alignment.Center // Center the content inside the Box
-                ) {
-                    LazyColumn(
-                        horizontalAlignment = Alignment.CenterHorizontally, // Center items horizontally inside LazyColumn
-                    ) {
-                    item {
-                        if (player?.strThumb != null && player.strThumb != "null") {
-                            Image(
-                                painter = rememberImagePainter(player.strThumb),
-                                contentDescription = "${player.strThumb} Crest",
-                                modifier = Modifier
-                                    .size(400.dp)
-                                    .padding(vertical = 16.dp)
-                            )
-                        } else {
-                            // Jos ei haluta näyttää mitään, voidaan jättää tämä else-blokki tyhjäksi
-                        }
-                    }
-                    item {
-                        if (player?.strCutout != null && player.strCutout != "null") {
-                            Image(
-                                painter = rememberImagePainter(player.strCutout),
-                                contentDescription = "${player.strCutout} Crest",
-                                modifier = Modifier
-                                    .size(400.dp)
-                                    .padding(vertical = 16.dp)
-                            )
-                        } else {
-                            // Jos ei haluta näyttää mitään, voidaan jättää tämä else-blokki tyhjäksi
-                        }
-                    }
-                    item {
-                        if (player?.strRender != null && player.strRender != "null") {
-                            Image(
-                                painter = rememberImagePainter(player.strRender),
-                                contentDescription = "${player.strRender} Crest",
-                                modifier = Modifier
-                                    .size(400.dp)
-                                    .padding(vertical = 16.dp)
-                            )
-                        } else {
-                            // Jos ei haluta näyttää mitään, voidaan jättää tämä else-blokki tyhjäksi
-                        }
-                    }
-                    item {
-                        if (player?.strBanner != null && player.strBanner != "null") {
-                            Image(
-                                painter = rememberImagePainter(player.strBanner),
-                                contentDescription = "${player.strBanner} Crest",
-                                modifier = Modifier
-                                    .size(400.dp)
-                                    .padding(vertical = 16.dp)
-                            )
-                        } else {
-                            // Jos ei haluta näyttää mitään, voidaan jättää tämä else-blokki tyhjäksi
-                        }
-                    }
-                    item {
-                        if (player?.strFanart1 != null && player.strFanart1 != "null") {
-                            Image(
-                                painter = rememberImagePainter(player.strFanart1),
-                                contentDescription = "${player.strFanart1} Crest",
-                                modifier = Modifier
-                                    .size(400.dp)
-                                    .padding(vertical = 16.dp)
-                            )
-                        } else {
-                            // Jos ei haluta näyttää mitään, voidaan jättää tämä else-blokki tyhjäksi
-                        }
-                    }
-                    item {
-                        if (player?.strFanart2 != null && player.strFanart2 != "null") {
-                            Image(
-                                painter = rememberImagePainter(player.strFanart2),
-                                contentDescription = "${player.strFanart2} Crest",
-                                modifier = Modifier
-                                    .size(400.dp)
-                                    .padding(vertical = 16.dp)
-                            )
-                        } else {
-                            // Jos ei haluta näyttää mitään, voidaan jättää tämä else-blokki tyhjäksi
-                        }
-                    }
-                    item {
-                        if (player?.strFanart3 != null && player.strFanart3 != "null") {
-                            Image(
-                                painter = rememberImagePainter(player.strFanart3),
-                                contentDescription = "${player.strFanart3} Crest",
-                                modifier = Modifier
-                                    .size(400.dp)
-                                    .padding(vertical = 16.dp)
-                            )
-                        } else {
-                            // Jos ei haluta näyttää mitään, voidaan jättää tämä else-blokki tyhjäksi
-                        }
-                    }
-                    item {
-                        if (player?.strFanart4 != null && player.strFanart4 != "null") {
-                            Image(
-                                painter = rememberImagePainter(player.strFanart4),
-                                contentDescription = "${player.strFanart4} Crest",
-                                modifier = Modifier
-                                    .size(400.dp)
-                                    .padding(vertical = 16.dp)
-
-                            )
-                        } else {
-                            // Jos ei haluta näyttää mitään, voidaan jättää tämä else-blokki tyhjäksi
-                        }
-                    }
-                }
-                    }
-            }
-        }
-    }
-}
 
 @Composable
 fun LoadingScreen() {
@@ -596,45 +263,6 @@ class ApiRateLimiter(private val maxCallsPerMinute: Int) {
     }
 }
 
-@Composable
-fun CoachDetails(coach: Coach) {
-    Column(modifier = Modifier.padding(vertical = 8.dp)) {
-        Text(text = "Valmentaja: ${coach.name}", fontWeight = FontWeight.Bold)
-
-        Text(text = "Syntymäaika: ${coach.dateOfBirth}", modifier = Modifier.padding(vertical = 4.dp))
-        Text(text = "Kansalaisuus: ${coach.nationality}", modifier = Modifier.padding(vertical = 4.dp))
-
-        Row(modifier = Modifier.padding(vertical = 4.dp)){
-            coach.contract?.let {
-                Text(text = "Sopimus: ${it.start ?: "N/A"} - ")
-                Text(text = "${it.until ?: "N/A"}")
-            } ?: Text(text = "Contract: Not Available")
-        }
-    }
-}
-
-@Composable
-fun PlayerCard(player: Player, navController: NavController) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 8.dp)
-            .border(1.dp, Color.Gray, shape = CutCornerShape(8.dp))
-            .padding(8.dp)
-            .clickable {
-                navController.navigate("player_details/${player.name}")
-            }
-    ) {
-        Text(
-            text = player.name,
-            fontSize = 20.sp,
-            fontWeight = FontWeight.Bold
-        )
-        Text(text = "Pelipaikka: ${player.position}")
-        Text(text = "Syntymäpäivä: ${player.dateOfBirth}")
-        Text(text = "Kansallisuus: ${player.nationality}")
-    }
-}
 
 @Preview(showBackground = true)
 @Composable

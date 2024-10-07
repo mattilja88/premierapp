@@ -1,4 +1,4 @@
-package com.example.premierapp
+package com.example.premierapp.ApiService
 
 data class StandingsResponse(
     val standings: List<Standings>
