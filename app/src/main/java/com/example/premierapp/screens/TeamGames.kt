@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -17,20 +18,34 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavController
 import coil.compose.rememberImagePainter
 import com.example.premierapp.ApiService.Events
 import com.example.premierapp.LoadingScreen
 import com.example.premierapp.ApiService.RetrofitClient
+import com.example.premierapp.BottomNavigation
+import com.example.premierapp.MainTopBar
+import com.example.premierapp.ScreenTopBar
+import com.example.premierapp.TabItem
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
 @Composable
-fun EveryGame(teamName: String) {
+fun EveryGame(teamName: String, items: List<TabItem>, lightPurple: Color, navController: NavController) {
     var isLoading by remember { mutableStateOf(true) }
     val everyGameList = remember { mutableListOf<List<Events>>() }
 
+    Scaffold(
+        topBar = {
+            ScreenTopBar(color = lightPurple, navController = navController)
+        },
+        bottomBar = {
+            BottomNavigation(items, navController)
+        }
+    ) { paddingValues ->
     LaunchedEffect(Unit) {
         withContext(Dispatchers.IO) {
             try {
@@ -53,46 +68,57 @@ fun EveryGame(teamName: String) {
     if (isLoading) {
         LoadingScreen()
     } else {
-        Column(modifier = Modifier.padding(top=0.dp, start=16.dp, end=16.dp, bottom=0.dp)) {
+        Column(
+            modifier = Modifier.padding(top = 0.dp, start = 16.dp, end = 16.dp, bottom = 0.dp)
+                .padding(paddingValues)
+        ) {
             LazyColumn(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(top=0.dp, start=16.dp, end=16.dp, bottom=0.dp),
+                    .padding(top = 0.dp, start = 16.dp, end = 16.dp, bottom = 0.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 everyGameList.flatten().forEach { game ->
                     item {
 
-                            if (isMatchingTeam(teamName, game) ||
-                                (teamName != "Manchester City FC" && teamName != "Manchester United FC" && isMatchingTeamWithShortName(teamName, game))) {
-                                Column(
+                        if (isMatchingTeam(teamName, game) ||
+                            (teamName != "Manchester City FC" && teamName != "Manchester United FC" && isMatchingTeamWithShortName(
+                                teamName,
+                                game
+                            ))
+                        ) {
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(16.dp),
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
+                                Text(
+                                    text = "Kierros: ${game.intRound}  ${game.dateEvent}",
+                                    fontSize = 18.sp
+                                )
+                                Image(
+                                    painter = rememberImagePainter(game.strBanner),
+                                    contentDescription = "${game.strEvent} Crest",
                                     modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(16.dp),
-                                    horizontalAlignment = Alignment.CenterHorizontally
-                                ) {
-                                    Text(text = "Kierros: ${game.intRound}  ${game.dateEvent}", fontSize = 18.sp)
-                                    Image(
-                                        painter = rememberImagePainter(game.strBanner),
-                                        contentDescription = "${game.strEvent} Crest",
-                                        modifier = Modifier
-                                            .size(width = 360.dp, height = 60.dp)
-                                            .padding(0.dp)
-                                    )
-                                    Text(
-                                        text = if (game.intHomeScore == null || game.intAwayScore == null) {
-                                            "${game.strHomeTeam} - ${game.strAwayTeam} (tulossa)"
-                                        } else {
-                                            "${game.strHomeTeam} - ${game.strAwayTeam} ${game.intHomeScore} - ${game.intAwayScore}"
-                                        },
-                                        fontSize = 14.sp
-                                    )
+                                        .size(width = 360.dp, height = 60.dp)
+                                        .padding(0.dp)
+                                )
+                                Text(
+                                    text = if (game.intHomeScore == null || game.intAwayScore == null) {
+                                        "${game.strHomeTeam} - ${game.strAwayTeam} (tulossa)"
+                                    } else {
+                                        "${game.strHomeTeam} - ${game.strAwayTeam} ${game.intHomeScore} - ${game.intAwayScore}"
+                                    },
+                                    fontSize = 14.sp
+                                )
                             }
                         }
                     }
                 }
             }
         }
+    }
     }
 }
 

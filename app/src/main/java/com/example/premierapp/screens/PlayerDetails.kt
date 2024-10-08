@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -18,6 +19,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -26,6 +28,10 @@ import coil.compose.rememberImagePainter
 import com.example.premierapp.LoadingScreen
 import com.example.premierapp.ApiService.PlayerResponseModel
 import com.example.premierapp.ApiService.RetrofitClient
+import com.example.premierapp.BottomNavigation
+import com.example.premierapp.MainTopBar
+import com.example.premierapp.ScreenTopBar
+import com.example.premierapp.TabItem
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
@@ -36,10 +42,22 @@ import java.time.format.DateTimeFormatter
 
 
 @Composable
-fun PlayerDetailsScreen(navController: NavController, fname: String){
+fun PlayerDetailsScreen(
+    navController: NavController,
+    fname: String,
+    items: List<TabItem>,
+    lightPurple: Color
+){
     var playerDetails by remember { mutableStateOf<PlayerResponseModel?>(null) }
     var isLoading by remember { mutableStateOf(true) }
-
+    Scaffold(
+        topBar = {
+            ScreenTopBar(color = lightPurple, navController = navController)
+        },
+        bottomBar = {
+            BottomNavigation(items, navController)
+        }
+    ) { paddingValues ->
     LaunchedEffect(fname) {
         delay(2000)
 
@@ -60,7 +78,7 @@ fun PlayerDetailsScreen(navController: NavController, fname: String){
     if (isLoading) {
         LoadingScreen()
     } else {
-        Column(modifier = Modifier.padding(top=0.dp, end=16.dp, start=16.dp)) {
+        Column(modifier = Modifier.padding(top=0.dp, end=16.dp, start=16.dp).padding(paddingValues)) {
             playerDetails?.player?.firstOrNull()?.let { player ->
 
                 Box(
@@ -87,7 +105,8 @@ fun PlayerDetailsScreen(navController: NavController, fname: String){
                             val londonZoneId = ZoneId.of("Europe/London")
                             val londonDateTime = ZonedDateTime.of(localDateTime, londonZoneId)
                             val helsinkiZoneId = ZoneId.of("Europe/Helsinki")
-                            val helsinkiDateTime = londonDateTime.withZoneSameInstant(helsinkiZoneId)
+                            val helsinkiDateTime =
+                                londonDateTime.withZoneSameInstant(helsinkiZoneId)
                             val formattedDate = helsinkiDateTime.format(dateFormatter)
                             Text(text = "Syntymäaika: $formattedDate")
                             Text(text = "Pelinumero: ${player.strNumber}")
@@ -193,6 +212,7 @@ fun PlayerDetailsScreen(navController: NavController, fname: String){
                             }
                         }
                     }
+                }
                 }
             }
         }

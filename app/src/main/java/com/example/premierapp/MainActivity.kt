@@ -1,5 +1,6 @@
 package com.example.premierapp
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -22,6 +23,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Search
@@ -35,6 +37,7 @@ import androidx.navigation.compose.composable
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
@@ -43,7 +46,6 @@ import androidx.compose.ui.graphics.Color
 import coil.compose.AsyncImage
 import com.example.premierapp.ApiService.ResponseModel
 import com.example.premierapp.ApiService.RetrofitClient
-import com.example.premierapp.screens.AllGames
 import com.example.premierapp.screens.EveryGame
 import com.example.premierapp.screens.GamePage
 import com.example.premierapp.screens.PlayerDetailsScreen
@@ -128,49 +130,33 @@ fun PremierApp(fetchData: (onResult: (List<ResponseModel>) -> Unit) -> Unit) {
         TabItem("Kaikki pelit", Icons.Filled.Search,"all_games")
     )
     val lightPurple = Color(0xFF04f5ff)
-
     Scaffold(
-        topBar = {
-            CenterAlignedTopAppBar(
-                modifier = Modifier.height(100.dp),
-                title = {
-                    AsyncImage(
-                        model = "https://fifplay.com/img/public/premier-league-3-logo.png",
-                        contentDescription = "Premier League Logo",
-                        modifier = Modifier.size(180.dp),
-                    )
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = lightPurple
-                )
-            )
-        },
         bottomBar = {
             BottomNavigation(items, navController)
-
         }
     ) { paddingValues ->
-        NavHost(navController = navController, startDestination = "team_list", Modifier.padding(paddingValues)) {
+        Spacer(modifier = Modifier.padding(paddingValues))
+        NavHost(navController = navController, startDestination = "team_list") {
             composable("team_list") {
-                TeamListScreen(navController, fetchData)
+                TeamListScreen(navController, fetchData, items, lightPurple)
             }
             composable("top_ten") {
-                TopTen(navController)
+                TopTen(navController, items, lightPurple)
             }
             composable("all_games") {
-                GamePage(navController)
+                GamePage(navController, items, lightPurple)
             }
             composable("team_details/{teamId}") { backStackEntry ->
                 val teamId = backStackEntry.arguments?.getString("teamId") ?: return@composable
-                TeamDetailsScreen(navController, teamId = teamId)
+                TeamDetailsScreen(navController, teamId = teamId, items, lightPurple)
             }
             composable("player_details/{fname}") { backStackEntry ->
                 val fname = backStackEntry.arguments?.getString("fname") ?: return@composable
-                PlayerDetailsScreen(navController, fname = fname)
+                PlayerDetailsScreen(navController, fname = fname, items, lightPurple)
             }
             composable("team_games/{teamName}") { backStackEntry ->
                 val teamName = backStackEntry.arguments?.getString("teamName") ?: return@composable
-                EveryGame(teamName = teamName)
+                EveryGame(teamName = teamName, items, lightPurple, navController)
             }
         }
     }
@@ -181,44 +167,69 @@ fun BottomNavigation(items: List<TabItem>, navController: NavController) {
     var selectedItem by remember { mutableIntStateOf(0) }
     val lightPurple = Color(0xFF04f5ff)
 
-    NavigationBar(
-        containerColor = lightPurple,
+    Box(
+        modifier = Modifier
+            .height(100.dp) // Set your desired height here
+            .fillMaxWidth()
     ) {
-        items.forEachIndexed { index, item ->
-            NavigationBarItem(
-                selected = selectedItem == index,
-                onClick = {
-                    selectedItem = index
-                    navController.navigate(item.route)
-                },
-                icon = { Icon(item.icon, contentDescription = null) },
-                label = { Text(item.label) }
-            )
+        NavigationBar(
+            containerColor = lightPurple,
+            modifier = Modifier.fillMaxSize() // Fill the Box
+        ) {
+            items.forEachIndexed { index, item ->
+                NavigationBarItem(
+                    selected = selectedItem == index,
+                    onClick = {
+                        selectedItem = index
+                        navController.navigate(item.route)
+                    },
+                    icon = { Icon(item.icon, contentDescription = null) },
+                    label = { Text(item.label) }
+                )
+            }
         }
     }
 }
 
 
 @Composable
-fun TeamListScreen(navController: NavController, fetchData: (onResult: (List<ResponseModel>) -> Unit) -> Unit) {
+fun TeamListScreen(
+    navController: NavController,
+    fetchData: (onResult: (List<ResponseModel>) -> Unit) -> Unit,
+    items: List<TabItem>,
+    lightPurple: Color
+) {
     var dataList by remember { mutableStateOf<List<ResponseModel>>(emptyList()) }
     var loading by remember { mutableStateOf(true) }
 
-    LaunchedEffect(Unit) {
-        fetchData { responseList ->
-            dataList = responseList
-            loading = false
+    Scaffold(
+        topBar = {
+            MainTopBar(color = lightPurple, navController = navController)
+        },
+        bottomBar = {
+            BottomNavigation(items, navController)
         }
-    }
+    ) { paddingValues ->
 
-    Column(
-        modifier = Modifier.padding(top=0.dp, start=16.dp, end=16.dp, bottom=0.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp)
-    ) {
-        if (loading) {
-            LoadingScreen()
-        } else {
-            Tulos(dataList, navController)
+        LaunchedEffect(Unit) {
+            fetchData { responseList ->
+                dataList = responseList
+                loading = false
+            }
+        }
+
+        Column(
+            modifier = Modifier
+                .padding(top = 0.dp, start = 16.dp, end = 16.dp, bottom = 0.dp)
+                .padding(paddingValues),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+
+        ) {
+            if (loading) {
+                LoadingScreen()
+            } else {
+                Tulos(dataList, navController)
+            }
         }
     }
 }
@@ -255,6 +266,44 @@ class ApiRateLimiter(private val maxCallsPerMinute: Int) {
     fun recordCall() {
         callTimestamps.add(System.currentTimeMillis())
     }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun MainTopBar(color: Color, navController: NavController) {
+    CenterAlignedTopAppBar(
+        title = {
+            AsyncImage(
+                model = "https://fifplay.com/img/public/premier-league-3-logo.png",
+                contentDescription = "Premier League Logo",
+                modifier = Modifier.size(180.dp),
+            )
+        },
+        colors = TopAppBarDefaults.topAppBarColors(
+            containerColor = color
+        )
+    )
+}
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun ScreenTopBar(color: Color, navController: NavController) {
+    CenterAlignedTopAppBar(
+        title = {
+            AsyncImage(
+                model = "https://fifplay.com/img/public/premier-league-3-logo.png",
+                contentDescription = "Premier League Logo",
+                modifier = Modifier.size(180.dp),
+            )
+        },
+        navigationIcon = {
+            IconButton(onClick = {navController.navigateUp()}) {
+                Icon(Icons.Filled.ArrowBack, contentDescription = null)
+            }
+        },
+        colors = TopAppBarDefaults.topAppBarColors(
+            containerColor = color
+        )
+    )
 }
 
 

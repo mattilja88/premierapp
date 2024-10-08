@@ -18,6 +18,7 @@ import androidx.compose.material3.Divider
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -37,6 +38,9 @@ import coil.compose.rememberImagePainter
 import com.example.premierapp.ApiService.GameWeekResponseModel
 import com.example.premierapp.LoadingScreen
 import com.example.premierapp.ApiService.RetrofitClient
+import com.example.premierapp.BottomNavigation
+import com.example.premierapp.MainTopBar
+import com.example.premierapp.TabItem
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.time.LocalDateTime
@@ -46,45 +50,59 @@ import java.time.format.DateTimeFormatter
 
 
 @Composable
-fun GamePage(navController: NavController){
+fun GamePage(navController: NavController, items: List<TabItem>, lightPurple: Color){
     var expanded by remember { mutableStateOf(false) }
     var clickedWeek by remember { mutableStateOf(1) }
     val lightPurple = Color(0xFF04f5ff)
 
     val weeks = (1..38).toList()
-    Column(){
-        Box(modifier = Modifier
-            .fillMaxWidth()
-            .padding(top=16.dp, end=16.dp, start=16.dp)
-            .clickable { expanded = true }
-            .background(lightPurple)
-            .padding(16.dp)) {
 
-            Text(
-                text = "Viikko $clickedWeek",
-                style = MaterialTheme.typography.bodySmall,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.fillMaxWidth()
-            )
-
-            DropdownMenu(
-                expanded = expanded,
-                onDismissRequest = { expanded = false },
+    Scaffold(
+        topBar = {
+            MainTopBar(color = lightPurple, navController = navController)
+        },
+        bottomBar = {
+            BottomNavigation(items, navController)
+        }
+    ) { paddingValues ->  // Capture the padding values
+        Column(modifier = Modifier
+            .fillMaxSize()   // Make the Column fill the available space
+            .padding(paddingValues) // Apply the padding values here
+        ) {
+            Box(
                 modifier = Modifier
-                    .height(LocalConfiguration.current.screenHeightDp.dp / 2)
-                    .background(lightPurple),
+                    .fillMaxWidth()
+                    .padding(top = 16.dp, end = 16.dp, start = 16.dp)
+                    .clickable { expanded = true }
+                    .background(lightPurple)
+                    .padding(16.dp)
             ) {
-                weeks.forEach { week ->
-                    DropdownMenuItem(
-                        text = { Text("Viikko $week", textAlign = TextAlign.Center) },
-                        onClick = {
-                            clickedWeek = week
-                            expanded = false
-                        })
+                Text(
+                    text = "Viikko $clickedWeek",
+                    style = MaterialTheme.typography.bodySmall,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                DropdownMenu(
+                    expanded = expanded,
+                    onDismissRequest = { expanded = false },
+                    modifier = Modifier
+                        .height(LocalConfiguration.current.screenHeightDp.dp / 2)
+                        .background(lightPurple),
+                ) {
+                    weeks.forEach { week ->
+                        DropdownMenuItem(
+                            text = { Text("Viikko $week", textAlign = TextAlign.Center) },
+                            onClick = {
+                                clickedWeek = week
+                                expanded = false
+                            })
+                    }
                 }
             }
+            AllGames(navController = navController, weekNumber = clickedWeek)
         }
-        AllGames(navController = navController, weekNumber = clickedWeek)
     }
 }
 

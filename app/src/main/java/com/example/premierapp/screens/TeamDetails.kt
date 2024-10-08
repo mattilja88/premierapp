@@ -23,17 +23,35 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Scaffold
 import androidx.compose.ui.graphics.Color
 import com.example.premierapp.LoadingScreen
 import com.example.premierapp.ApiService.RetrofitClient
 import com.example.premierapp.ApiService.TeamDetailsModel
+import com.example.premierapp.BottomNavigation
+import com.example.premierapp.MainTopBar
+import com.example.premierapp.ScreenTopBar
+import com.example.premierapp.TabItem
 
 
 @Composable
-fun TeamDetailsScreen(navController: NavController, teamId: String) {
+fun TeamDetailsScreen(
+    navController: NavController,
+    teamId: String,
+    items: List<TabItem>,
+    lightPurple: Color
+) {
     var teamDetails by remember { mutableStateOf<TeamDetailsModel?>(null) }
     var isLoading by remember { mutableStateOf(true) }
 
+    Scaffold(
+        topBar = {
+            ScreenTopBar(color = lightPurple, navController = navController)
+        },
+        bottomBar = {
+            BottomNavigation(items, navController)
+        }
+    ) { paddingValues ->
     LaunchedEffect(teamId) {
         delay(1000)
 
@@ -54,7 +72,7 @@ fun TeamDetailsScreen(navController: NavController, teamId: String) {
     if (isLoading) {
         LoadingScreen()
     } else {
-        Column(modifier = Modifier.padding(top=0.dp, start=16.dp, end=16.dp, bottom=0.dp)) {
+        Column(modifier = Modifier.padding(top = 0.dp, start = 16.dp, end = 16.dp, bottom = 0.dp).padding(paddingValues)) {
 
             Box(
                 modifier = Modifier.fillMaxSize(),
@@ -62,7 +80,7 @@ fun TeamDetailsScreen(navController: NavController, teamId: String) {
             ) {
                 LazyColumn(
                     horizontalAlignment = Alignment.CenterHorizontally,
-                ){
+                ) {
                     item {
                         Text(
                             text = "${teamDetails?.name}",
@@ -145,5 +163,6 @@ fun TeamDetailsScreen(navController: NavController, teamId: String) {
                 }
             }
         }
+    }
     }
 }
