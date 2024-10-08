@@ -1,6 +1,7 @@
 package com.example.premierapp.screens
 
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Text
@@ -45,10 +46,12 @@ fun CoachDetails(coach: Coach) {
 
 @Composable
 fun PlayerCard(player: Player, navController: NavController) {
+    val bgColor = Color(0xFF00ff85)
     Column(
         modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = 8.dp)
+            .background(bgColor, shape = RoundedCornerShape(16.dp))
             .border(1.dp, Color.Gray, shape = RoundedCornerShape(16.dp))
             .padding(8.dp)
             .clickable {
@@ -76,12 +79,14 @@ fun PlayerCard(player: Player, navController: NavController) {
 }
 
 @Composable
-fun TopTenScorers(scorer: Scorer, navController: NavController) {
+fun TopTenScorers(scorer: Scorer, navController: NavController, number: Int) {
+    val bgColor = Color(0xFF00ff85)
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 8.dp)
-            .padding(4.dp)
+            .padding(end = 32.dp, top = 8.dp, start = 32.dp, bottom = 8.dp)
+            .border(1.dp, Color.Gray, shape = RoundedCornerShape(16.dp))
+            .background(bgColor, shape = RoundedCornerShape(16.dp))
             .clickable {
                 navController.navigate("player_details/${scorer.player.name}")
             },
@@ -89,14 +94,16 @@ fun TopTenScorers(scorer: Scorer, navController: NavController) {
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text(
-            text = scorer.player.name,
+            text = "${number}. ${scorer.player.name}",
             fontSize = 25.sp,
-            fontWeight = FontWeight.Bold
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.padding(top=8.dp)
         )
-        Text(text = scorer.team.name, fontWeight = FontWeight.Bold) // Use scorer.team.name
-        Text(text = "Maalit: ${scorer.goals}")
-        Text(text = "Syötöt: ${scorer.assists ?: 0}") // Handle null assists
-        Text(text = "Pilkuista: ${scorer.penalties ?: 0}") // Handle null penalties
-        Text(text = "Ottelut: ${scorer.playedMatches}")
+        Text(text = scorer.team.name, fontWeight = FontWeight.Bold)
+        Text(text = "Maalit: ${scorer.goals}   Syötöt ${scorer.assists ?: 0}",
+            )
+        Text(text = "Pilkuista: ${scorer.penalties ?: 0}   Ottelut: ${scorer.playedMatches}",
+            modifier = Modifier.padding(bottom=8.dp)
+            )
     }
 }

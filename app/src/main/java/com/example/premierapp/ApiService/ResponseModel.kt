@@ -10,9 +10,9 @@ data class Team(
 
 data class ResponseModel(
     val position: Int,
-    val team: Team, // Use the new Team class here
+    val team: Team,
     val playedGames: Int,
-    val form: String?, // form can be null, so we make it nullable
+    val form: String?,
     val won: Int,
     val draw: Int,
     val lost: Int,
@@ -98,11 +98,11 @@ data class TeamPlayer(
     val strThumb: String,
     val strCutout: String,
     val strRender: String,
-    val strBanner: String?, // Nullable fields
-    val strFanart1: String?, // Nullable fields
-    val strFanart2: String?, // Nullable fields
-    val strFanart3: String?, // Nullable fields
-    val strFanart4: String?  // Nullable fields
+    val strBanner: String?,
+    val strFanart1: String?,
+    val strFanart2: String?,
+    val strFanart3: String?,
+    val strFanart4: String?
 )
 
 data class TopScorers(
@@ -175,37 +175,37 @@ data class GameWeekResponseModel(
 )
 
 data class Events(
-    val strEvent: String,             // Event name
-    val strLeague: String,            // League name
-    val strLeagueBadge: String,       // URL of the league badge
-    val strHomeTeam: String,          // Home team name
-    val strAwayTeam: String,          // Away team name
-    val intHomeScore: String?,        // Home team score (nullable)
-    val intAwayScore: String?,        // Away team score (nullable)
-    val intRound: String?,            // Round number (nullable)
-    val intSpectators: String?,       // Number of spectators (nullable)
-    val strOfficial: String?,         // Official(s) (nullable)
-    val strTimestamp: String,         // Event timestamp (UTC time)
-    val dateEvent: String,            // Event date
-    val dateEventLocal: String,       // Local event date
-    val strTime: String,              // Event time (UTC)
-    val strTimeLocal: String,         // Local event time
-    val strHomeTeamBadge: String,     // URL of the home team's badge
-    val idAwayTeam: String,           // ID of the away team
-    val strAwayTeamBadge: String,     // URL of the away team's badge
-    val strVenue: String?,            // Venue name (nullable)
-    val strCountry: String?,          // Country name (nullable)
-    val strCity: String?,             // City name (nullable)
-    val strPoster: String?,           // URL of the event poster
-    val strSquare: String?,           // URL of the square image of the event
-    val strFanart: String?,           // URL of the fanart image (nullable)
-    val strThumb: String?,            // URL of the thumbnail image
-    val strBanner: String?,           // URL of the banner image
-    val strMap: String?,              // Map URL (nullable)
-    val strVideo: String?,            // URL of the video highlights
-    val strStatus: String?,           // Event status (nullable)
-    val strPostponed: String?,        // If the match is postponed (nullable)
-    val strLocked: String?            // If the event data is locked (nullable)
+    val strEvent: String,
+    val strLeague: String,
+    val strLeagueBadge: String,
+    val strHomeTeam: String,
+    val strAwayTeam: String,
+    val intHomeScore: String?,
+    val intAwayScore: String?,
+    val intRound: String?,
+    val intSpectators: String?,
+    val strOfficial: String?,
+    val strTimestamp: String,
+    val dateEvent: String,
+    val dateEventLocal: String,
+    val strTime: String,
+    val strTimeLocal: String,
+    val strHomeTeamBadge: String,
+    val idAwayTeam: String,
+    val strAwayTeamBadge: String,
+    val strVenue: String?,
+    val strCountry: String?,
+    val strCity: String?,
+    val strPoster: String?,
+    val strSquare: String?,
+    val strFanart: String?,
+    val strThumb: String?,
+    val strBanner: String?,
+    val strMap: String?,
+    val strVideo: String?,
+    val strStatus: String?,
+    val strPostponed: String?,
+    val strLocked: String?
 )
 
 

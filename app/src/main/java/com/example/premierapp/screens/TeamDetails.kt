@@ -34,9 +34,7 @@ fun TeamDetailsScreen(navController: NavController, teamId: String) {
     var teamDetails by remember { mutableStateOf<TeamDetailsModel?>(null) }
     var isLoading by remember { mutableStateOf(true) }
 
-    // Fetch team details based on the teamId
     LaunchedEffect(teamId) {
-        // Simulate a delay for loading state
         delay(1000)
 
         withContext(Dispatchers.IO) {
@@ -44,58 +42,56 @@ fun TeamDetailsScreen(navController: NavController, teamId: String) {
                 val response = RetrofitClient.footballApiService.getTeamDetails(teamId)
                 withContext(Dispatchers.Main) {
                     teamDetails = response
-                    isLoading = false // Set loading to false after fetching
+                    isLoading = false
                 }
             } catch (e: Exception) {
                 Log.e("Error", "Error fetching team details: $e")
-                isLoading = false // Set loading to false in case of error
+                isLoading = false
             }
         }
     }
 
-    // Show loading state until data is fetched
     if (isLoading) {
         LoadingScreen()
     } else {
-        // Main column for displaying team details
-        Column(modifier = Modifier.padding(16.dp)) {
-            // Display team name and crest outside of LazyColumn
-            Text(
-                text = "${teamDetails?.name}",
-                fontSize = 32.sp,
-                textAlign = TextAlign.Center,
-                modifier = Modifier
-                    .padding(vertical = 8.dp)
-                    .fillMaxWidth()
-            )
-            Image(
-                painter = rememberImagePainter(teamDetails?.crest),
-                contentDescription = "${teamDetails?.name} Crest",
-                modifier = Modifier
-                    .size(160.dp)
-                    .padding(vertical = 8.dp)
-                    .align(Alignment.CenterHorizontally)
-            )
-            Button(
-                onClick = {
-                    navController.navigate("team_games/${teamDetails?.name}")
-                },
-                modifier = Modifier.align(Alignment.CenterHorizontally).padding(bottom = 8.dp).width(300.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = Color(0xFF04f5ff), // Background color
-                    contentColor = Color.White   // Text color
-                )
-            ) {
-                Text(text = "Joukkueen ottelut")
-            }
+        Column(modifier = Modifier.padding(top=0.dp, start=16.dp, end=16.dp, bottom=0.dp)) {
 
             Box(
-                modifier = Modifier.fillMaxSize(), // Make Box take the whole screen
-                contentAlignment = Alignment.Center // Center the content inside the Box
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
             ) {
                 LazyColumn(
-                    horizontalAlignment = Alignment.CenterHorizontally, // Center items horizontally inside LazyColumn
+                    horizontalAlignment = Alignment.CenterHorizontally,
                 ){
+                    item {
+                        Text(
+                            text = "${teamDetails?.name}",
+                            fontSize = 32.sp,
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier
+                                .padding(vertical = 8.dp)
+                                .fillMaxWidth()
+                        )
+                        Image(
+                            painter = rememberImagePainter(teamDetails?.crest),
+                            contentDescription = "${teamDetails?.name} Crest",
+                            modifier = Modifier
+                                .size(160.dp)
+                                .padding(vertical = 8.dp)
+                        )
+                        Button(
+                            onClick = {
+                                navController.navigate("team_games/${teamDetails?.name}")
+                            },
+                            modifier = Modifier.padding(bottom = 8.dp).width(300.dp),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = Color(0xFF04f5ff),
+                                contentColor = Color.White
+                            )
+                        ) {
+                            Text(text = "Joukkueen ottelut")
+                        }
+                    }
                     item {
                         Text(
                             text = "Perustettu ${teamDetails?.founded}",
@@ -110,15 +106,13 @@ fun TeamDetailsScreen(navController: NavController, teamId: String) {
                         Spacer(modifier = Modifier.height(16.dp))
                     }
 
-                    // Coach details
                     teamDetails?.coach?.let { coach ->
                         item {
-                            CoachDetails(coach = coach) // Insert CoachDetails here
+                            CoachDetails(coach = coach)
                             Spacer(modifier = Modifier.height(16.dp))
                         }
                     }
 
-                    // Header for players
                     item {
                         Text(
                             text = "Pelaajat:",
@@ -128,20 +122,22 @@ fun TeamDetailsScreen(navController: NavController, teamId: String) {
                         )
                     }
 
-                    // Player list
                     teamDetails?.squad?.let { players ->
                         items(players) { player ->
                             PlayerCard(player = player, navController)
                         }
                     }
 
-                    // Button to go back to the previous screen
                     item {
-                        androidx.compose.material3.Button(
+                        Button(
                             onClick = {
-                                navController.popBackStack() // Navigate back to the previous screen
+                                navController.popBackStack()
                             },
-                            modifier = Modifier.padding(top = 16.dp)
+                            modifier = Modifier.padding(bottom = 8.dp).width(300.dp),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = Color(0xFF04f5ff),
+                                contentColor = Color.White
+                            )
                         ) {
                             Text("Sarjataulukkoon")
                         }

@@ -1,8 +1,6 @@
 package com.example.premierapp.screens
 
-import android.os.Build
 import android.util.Log
-import androidx.annotation.RequiresApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -15,8 +13,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.material3.Divider
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.MaterialTheme
@@ -57,17 +55,16 @@ fun GamePage(navController: NavController){
     Column(){
         Box(modifier = Modifier
             .fillMaxWidth()
-            .padding(16.dp)
+            .padding(top=16.dp, end=16.dp, start=16.dp)
             .clickable { expanded = true }
             .background(lightPurple)
             .padding(16.dp)) {
 
-            // Show the currently selected week
             Text(
                 text = "Viikko $clickedWeek",
                 style = MaterialTheme.typography.bodySmall,
                 textAlign = TextAlign.Center,
-                modifier = Modifier.fillMaxWidth() // Make text take full width to center it
+                modifier = Modifier.fillMaxWidth()
             )
 
             DropdownMenu(
@@ -81,8 +78,8 @@ fun GamePage(navController: NavController){
                     DropdownMenuItem(
                         text = { Text("Viikko $week", textAlign = TextAlign.Center) },
                         onClick = {
-                            clickedWeek = week // Set the clicked week
-                            expanded = false   // Dismiss the dropdown menu
+                            clickedWeek = week
+                            expanded = false
                         })
                 }
             }
@@ -91,12 +88,10 @@ fun GamePage(navController: NavController){
     }
 }
 
-@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun AllGames(navController: NavController, weekNumber: Int) {
     var gameWeekDetails by remember { mutableStateOf<GameWeekResponseModel?>(null) }
     var isLoading by remember { mutableStateOf(true) }
-    var errorMessage by remember { mutableStateOf<String?>(null) }
 
     LaunchedEffect(weekNumber) {
         withContext(Dispatchers.IO) {
@@ -104,7 +99,7 @@ fun AllGames(navController: NavController, weekNumber: Int) {
                 val response = RetrofitClient.theSportsDbApiService.getGamesForWeek(week = weekNumber)
                 withContext(Dispatchers.Main) {
                     gameWeekDetails = response
-                    isLoading = false // Set loading to false after fetching
+                    isLoading = false
                 }
             } catch (e: Exception) {
                 Log.e("Error", "Error fetching Gameweek details: $e")
@@ -115,11 +110,10 @@ fun AllGames(navController: NavController, weekNumber: Int) {
     if (isLoading) {
         LoadingScreen()
     } else {
-        Column(modifier = Modifier.padding(16.dp)){
+        Column(modifier = Modifier.padding(top=0.dp, start=16.dp, end=16.dp, bottom=0.dp)){
             LazyColumn(
                 modifier = Modifier
-                    .fillMaxSize()
-                    .padding(16.dp),
+                    .fillMaxSize(),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 gameWeekDetails?.events?.forEach { event ->
@@ -130,9 +124,9 @@ fun AllGames(navController: NavController, weekNumber: Int) {
                                 .padding(8.dp),
                             horizontalAlignment = Alignment.CenterHorizontally
                         )  {
-                                val dateFormatter = DateTimeFormatter.ofPattern("d.M.yyyy") // Example: 7.10.2024
-                                val timeFormatter = DateTimeFormatter.ofPattern("HH:mm") // Example: 14:30
-                                val localDateTimeString = "${event.strTimestamp}"
+                                val dateFormatter = DateTimeFormatter.ofPattern("d.M.yyyy")
+                                val timeFormatter = DateTimeFormatter.ofPattern("HH:mm")
+                                val localDateTimeString = event.strTimestamp
                                 val localDateTime = LocalDateTime.parse(localDateTimeString)
                                 val londonZoneId = ZoneId.of("Europe/London")
                                 val londonDateTime = ZonedDateTime.of(localDateTime, londonZoneId)
@@ -149,9 +143,8 @@ fun AllGames(navController: NavController, weekNumber: Int) {
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .padding(16.dp),
-                                verticalAlignment = Alignment.CenterVertically // Align images in the center vertically
+                                verticalAlignment = Alignment.CenterVertically
                             ) {
-                                // Check if the home team badge is not null
                                 if (!event.strHomeTeamBadge.isNullOrEmpty()) {
                                     Image(
                                         painter = rememberImagePainter(event.strHomeTeamBadge),
@@ -162,11 +155,10 @@ fun AllGames(navController: NavController, weekNumber: Int) {
                                             .weight(1f)
                                     )
                                 } else {
-                                    // Placeholder or empty Image when URL is null
                                     Box(
                                         modifier = Modifier
                                             .size(60.dp)
-                                            .background(Color.Gray), // Placeholder color
+                                            .background(Color.Gray),
                                     )
                                 }
 
@@ -174,7 +166,6 @@ fun AllGames(navController: NavController, weekNumber: Int) {
                                 Spacer(modifier = Modifier.weight(1f))
                                 Text(text = "${event.intAwayScore}", fontSize = 18.sp,)
 
-                                // Check if the away team badge is not null
                                 if (!event.strAwayTeamBadge.isNullOrEmpty()) {
                                     Image(
                                         painter = rememberImagePainter(event.strAwayTeamBadge),
@@ -185,22 +176,21 @@ fun AllGames(navController: NavController, weekNumber: Int) {
                                             .weight(1f)
                                     )
                                 } else {
-                                    // Placeholder or empty Image when URL is null
                                     Box(
                                         modifier = Modifier
                                             .size(60.dp)
-                                            .background(Color.Gray), // Placeholder color
+                                            .background(Color.Gray),
                                     )
                                 }
                             }
                             Spacer(modifier = Modifier.height(16.dp))
+                            Divider(
+                                color = Color.Gray,
+                                thickness = 1.dp,
+                                modifier = Modifier.padding(vertical = 8.dp)
+                            )
+
                         }
-
-
-                        //{
-                        //    Text(text = "${event.strHomeTeam} - ${event.strAwayTeam}", fontSize = 18.sp)
-                        //
-                       // }
                     }
                 }
             }

@@ -7,7 +7,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -58,18 +57,18 @@ fun TopTen(navController: NavController) {
         }
     }
 
-    // Using Box to center content
     Box(modifier = Modifier.fillMaxSize()) {
         LazyColumn(modifier = Modifier.fillMaxSize()) {
             topScorers?.scorers?.let { scorers ->
-                items(scorers) { scorer ->
-                    TopTenScorers(scorer = scorer, navController = navController)
+                items(scorers.size) { index ->
+                    val scorer = scorers[index]
                     Spacer(modifier = Modifier.height(16.dp))
+                    TopTenScorers(scorer = scorer, navController = navController, number = index + 1)
                 }
             }
+
         }
 
-        // Centering the error message or loading screen
         if (errorMessage != null) {
             Text(
                 text = errorMessage ?: "",

@@ -72,12 +72,12 @@ class MainActivity : ComponentActivity() {
         }
     }
     private fun fetchData(context: Context, onResult: (List<ResponseModel>) -> Unit) {
-        debounceJob?.cancel() // Cancel previous job
+        debounceJob?.cancel()
         debounceJob = CoroutineScope(Dispatchers.IO).launch {
             if (apiRateLimiter.canMakeCall()) {
                 try {
                     val response = RetrofitClient.footballApiService.getData()
-                    apiRateLimiter.recordCall() // Record the call
+                    apiRateLimiter.recordCall()
 
                     withContext(Dispatchers.Main) {
                         onResult(response.standings[0].table)
@@ -88,9 +88,7 @@ class MainActivity : ComponentActivity() {
                         when (e) {
                             is HttpException -> {
                                 if (e.code() == 429) {
-                                    // Liikaa pyyntöjä, näytetään varoitus
                                     Log.w("Warning", "Rate limit exceeded. Please wait.")
-                                    // Näytetään varoitusviesti käyttäjälle
                                     Toast.makeText(
                                         context,
                                         "Liian monta API-kutsua peräkkäin, odota hetki.",
@@ -139,20 +137,19 @@ fun PremierApp(fetchData: (onResult: (List<ResponseModel>) -> Unit) -> Unit) {
                     AsyncImage(
                         model = "https://fifplay.com/img/public/premier-league-3-logo.png",
                         contentDescription = "Premier League Logo",
-                        modifier = Modifier.size(180.dp),// Set size for the logo
+                        modifier = Modifier.size(180.dp),
                     )
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = lightPurple// Teal background for secondary screens
+                    containerColor = lightPurple
                 )
             )
         },
         bottomBar = {
-            // Add your BottomBar here if needed
             BottomNavigation(items, navController)
 
         }
-    ) { paddingValues ->  // Use paddingValues to apply padding to the NavHost
+    ) { paddingValues ->
         NavHost(navController = navController, startDestination = "team_list", Modifier.padding(paddingValues)) {
             composable("team_list") {
                 TeamListScreen(navController, fetchData)
@@ -182,11 +179,10 @@ fun PremierApp(fetchData: (onResult: (List<ResponseModel>) -> Unit) -> Unit) {
 @Composable
 fun BottomNavigation(items: List<TabItem>, navController: NavController) {
     var selectedItem by remember { mutableIntStateOf(0) }
-    val lightPurple = Color(0xFF04f5ff) // Define your light purple color here
+    val lightPurple = Color(0xFF04f5ff)
 
     NavigationBar(
         containerColor = lightPurple,
-        modifier = Modifier.height(100.dp)// Set the background color for the NavigationBar
     ) {
         items.forEachIndexed { index, item ->
             NavigationBarItem(
@@ -206,24 +202,23 @@ fun BottomNavigation(items: List<TabItem>, navController: NavController) {
 @Composable
 fun TeamListScreen(navController: NavController, fetchData: (onResult: (List<ResponseModel>) -> Unit) -> Unit) {
     var dataList by remember { mutableStateOf<List<ResponseModel>>(emptyList()) }
-    var loading by remember { mutableStateOf(true) } // To track loading state
+    var loading by remember { mutableStateOf(true) }
 
-    // Using LaunchedEffect to fetch data when this composable enters the composition
     LaunchedEffect(Unit) {
         fetchData { responseList ->
             dataList = responseList
-            loading = false // Update loading state once data is fetched
+            loading = false
         }
     }
 
     Column(
-        modifier = Modifier.padding(8.dp),
+        modifier = Modifier.padding(top=0.dp, start=16.dp, end=16.dp, bottom=0.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         if (loading) {
-            LoadingScreen() // Show loading indicator while data is being fetched
+            LoadingScreen()
         } else {
-            Tulos(dataList, navController) // Show data when available
+            Tulos(dataList, navController)
         }
     }
 }
@@ -232,15 +227,15 @@ fun TeamListScreen(navController: NavController, fetchData: (onResult: (List<Res
 @Composable
 fun LoadingScreen() {
         Box(
-            modifier = Modifier.fillMaxSize(), // täyttää koko näytön
-            contentAlignment = Alignment.Center // keskittää sisältö ruudun keskelle
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center
         ) {
             Column(
-                horizontalAlignment = Alignment.CenterHorizontally // keskittää tekstin ja kuvakkeen
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                CircularProgressIndicator() // Latausikoni (pyörivä ympyrä)
-                Spacer(modifier = Modifier.height(16.dp)) // Lisää väliä ikonin ja tekstin väliin
-                Text("Loading data...") // Näyttää lataustekstin
+                CircularProgressIndicator()
+                Spacer(modifier = Modifier.height(16.dp))
+                Text("Loading data...")
             }
         }
 }
@@ -251,7 +246,6 @@ class ApiRateLimiter(private val maxCallsPerMinute: Int) {
 
     fun canMakeCall(): Boolean {
         val currentTime = System.currentTimeMillis()
-        // Reset timestamps if a minute has passed
         if (currentTime - lastResetTime > 60000) {
             callTimestamps.clear()
             lastResetTime = currentTime
@@ -267,5 +261,5 @@ class ApiRateLimiter(private val maxCallsPerMinute: Int) {
 @Preview(showBackground = true)
 @Composable
 fun GreetingPreview() {
-    PremierApp(fetchData = { onResult -> onResult(emptyList()) }) // Mock fetchData for preview
+    PremierApp(fetchData = { onResult -> onResult(emptyList()) })
 }

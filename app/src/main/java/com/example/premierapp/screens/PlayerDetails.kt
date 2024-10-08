@@ -38,11 +38,9 @@ import java.time.format.DateTimeFormatter
 @Composable
 fun PlayerDetailsScreen(navController: NavController, fname: String){
     var playerDetails by remember { mutableStateOf<PlayerResponseModel?>(null) }
-    var isLoading by remember { mutableStateOf(true) } // State to track loading status
+    var isLoading by remember { mutableStateOf(true) }
 
-    // Fetch team details based on the teamId
     LaunchedEffect(fname) {
-        // Simulate a delay for loading state
         delay(2000)
 
         withContext(Dispatchers.IO) {
@@ -50,11 +48,11 @@ fun PlayerDetailsScreen(navController: NavController, fname: String){
                 val response = RetrofitClient.theSportsDbApiService.getPlayerDetails(fname)
                 withContext(Dispatchers.Main) {
                     playerDetails = response
-                    isLoading = false // Set loading to false after fetching
+                    isLoading = false
                 }
             } catch (e: Exception) {
                 Log.e("Error", "Error fetching team details: $e")
-                isLoading = false // Set loading to false in case of error
+                isLoading = false
             }
         }
     }
@@ -62,42 +60,41 @@ fun PlayerDetailsScreen(navController: NavController, fname: String){
     if (isLoading) {
         LoadingScreen()
     } else {
-        // Main column for displaying team details
-        Column(modifier = Modifier.padding(16.dp)) {
-            // Display player name and details
+        Column(modifier = Modifier.padding(top=0.dp, end=16.dp, start=16.dp)) {
             playerDetails?.player?.firstOrNull()?.let { player ->
-                Text(
-                    text = player.strPlayer,
-                    fontSize = 32.sp,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier
-                        .padding(vertical = 32.dp)
-                        .fillMaxWidth()
-                )
-                // Add more player details display here as needed
-                Text(text = "Pelipaikka: ${player.strPosition}")
-                Text(text = "Kansalaisuus: ${player.strNationality}")
-                val dateFormatter = DateTimeFormatter.ofPattern("d.M.yyyy")
-                val localDateTimeString = "${player.dateBorn}T00:00"
-                val localDateTime = LocalDateTime.parse(localDateTimeString)
-                val londonZoneId = ZoneId.of("Europe/London")
-                val londonDateTime = ZonedDateTime.of(localDateTime, londonZoneId)
-                val helsinkiZoneId = ZoneId.of("Europe/Helsinki")
-                val helsinkiDateTime = londonDateTime.withZoneSameInstant(helsinkiZoneId)
-                val formattedDate = helsinkiDateTime.format(dateFormatter)
-                Text(text = "Syntymäaika: $formattedDate")
-                Text(text = "Pelinumero: ${player.strNumber}")
-                Text(text = "Palkka: ${player.strWage}")
-                Text(text = "Pituus: ${player.strHeight}")
-                Text(text = "Paino: ${player.strWeight}")
-                // Add more player fields as needed
+
                 Box(
-                    modifier = Modifier.fillMaxSize(), // Make Box take the whole screen
-                    contentAlignment = Alignment.Center // Center the content inside the Box
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
                 ) {
                     LazyColumn(
-                        horizontalAlignment = Alignment.CenterHorizontally, // Center items horizontally inside LazyColumn
+                        horizontalAlignment = Alignment.CenterHorizontally,
                     ) {
+                        item {
+                            Text(
+                                text = player.strPlayer,
+                                fontSize = 32.sp,
+                                textAlign = TextAlign.Center,
+                                modifier = Modifier
+                                    .padding(vertical = 16.dp)
+                                    .fillMaxWidth()
+                            )
+                            Text(text = "Pelipaikka: ${player.strPosition}")
+                            Text(text = "Kansalaisuus: ${player.strNationality}")
+                            val dateFormatter = DateTimeFormatter.ofPattern("d.M.yyyy")
+                            val localDateTimeString = "${player.dateBorn}T00:00"
+                            val localDateTime = LocalDateTime.parse(localDateTimeString)
+                            val londonZoneId = ZoneId.of("Europe/London")
+                            val londonDateTime = ZonedDateTime.of(localDateTime, londonZoneId)
+                            val helsinkiZoneId = ZoneId.of("Europe/Helsinki")
+                            val helsinkiDateTime = londonDateTime.withZoneSameInstant(helsinkiZoneId)
+                            val formattedDate = helsinkiDateTime.format(dateFormatter)
+                            Text(text = "Syntymäaika: $formattedDate")
+                            Text(text = "Pelinumero: ${player.strNumber}")
+                            Text(text = "Palkka: ${player.strWage}")
+                            Text(text = "Pituus: ${player.strHeight}")
+                            Text(text = "Paino: ${player.strWeight}")
+                        }
                         item {
                             if (player?.strThumb != null && player.strThumb != "null") {
                                 Image(
@@ -108,7 +105,6 @@ fun PlayerDetailsScreen(navController: NavController, fname: String){
                                         .padding(vertical = 16.dp)
                                 )
                             } else {
-                                // Jos ei haluta näyttää mitään, voidaan jättää tämä else-blokki tyhjäksi
                             }
                         }
                         item {
@@ -121,7 +117,6 @@ fun PlayerDetailsScreen(navController: NavController, fname: String){
                                         .padding(vertical = 16.dp)
                                 )
                             } else {
-                                // Jos ei haluta näyttää mitään, voidaan jättää tämä else-blokki tyhjäksi
                             }
                         }
                         item {
@@ -134,7 +129,6 @@ fun PlayerDetailsScreen(navController: NavController, fname: String){
                                         .padding(vertical = 16.dp)
                                 )
                             } else {
-                                // Jos ei haluta näyttää mitään, voidaan jättää tämä else-blokki tyhjäksi
                             }
                         }
                         item {
@@ -147,7 +141,6 @@ fun PlayerDetailsScreen(navController: NavController, fname: String){
                                         .padding(vertical = 16.dp)
                                 )
                             } else {
-                                // Jos ei haluta näyttää mitään, voidaan jättää tämä else-blokki tyhjäksi
                             }
                         }
                         item {
@@ -160,7 +153,6 @@ fun PlayerDetailsScreen(navController: NavController, fname: String){
                                         .padding(vertical = 16.dp)
                                 )
                             } else {
-                                // Jos ei haluta näyttää mitään, voidaan jättää tämä else-blokki tyhjäksi
                             }
                         }
                         item {
@@ -173,7 +165,6 @@ fun PlayerDetailsScreen(navController: NavController, fname: String){
                                         .padding(vertical = 16.dp)
                                 )
                             } else {
-                                // Jos ei haluta näyttää mitään, voidaan jättää tämä else-blokki tyhjäksi
                             }
                         }
                         item {
@@ -186,7 +177,6 @@ fun PlayerDetailsScreen(navController: NavController, fname: String){
                                         .padding(vertical = 16.dp)
                                 )
                             } else {
-                                // Jos ei haluta näyttää mitään, voidaan jättää tämä else-blokki tyhjäksi
                             }
                         }
                         item {
@@ -200,7 +190,6 @@ fun PlayerDetailsScreen(navController: NavController, fname: String){
 
                                 )
                             } else {
-                                // Jos ei haluta näyttää mitään, voidaan jättää tämä else-blokki tyhjäksi
                             }
                         }
                     }
